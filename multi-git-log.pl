@@ -20,19 +20,28 @@ sub parseCommits {
     push @commits, $currentcommit;
     return @commits;
 }
+sub date {
+    my ($commit) = @_;
+    if ($commit !~ m/Date:\s*([^\n]+)/) {
+        print STDERR "No date found in commit $commit";
+	return;
+    }
+    return $1;
+}
 # --author, --committer from `git log`
 my ($author, $committer);
 GetOptions("author=s", \$author,
            "committer=s", \$committer);
 my $dir = shift;
 my @gitdirs = map {s/.git$//;$_} glob "$dir/*/.git";
+my @allcommits = ();
 #print "author=$author\n";
 #print join "\n", @gitdirs;
 #print "\n";
 foreach my $repodir (@gitdirs) {
     print STDERR "Repository: $repodir\n";
     my $repo = Git->repository(Directory => $repodir);
-    my @cmdline = 'log';
+    my @cmdline = ('log', '--date=iso');
     if (defined $author) {
         push @cmdline, "--author=$author";
     }
@@ -46,6 +55,7 @@ foreach my $repodir (@gitdirs) {
 	1;
     } or next;
     if (scalar @commits == 1 and not defined $commits[0]) {
+	# parseCommits returned undef.
 	my $who = "";
 	if (defined $author) {
             $who .= "author=$author";
@@ -57,6 +67,7 @@ foreach my $repodir (@gitdirs) {
     }
     else {
 	#print STDERR Dumper \@commits;
-	print @commits;
+	push @allcommits, @commits;
     }
 }
+print map {$_->[0]} sort {$b->[1] cmp $a->[1]} map {[$_, date($_)]} @allcommits;
