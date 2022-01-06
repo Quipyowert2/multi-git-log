@@ -38,12 +38,18 @@ GetOptions("author=s" => \$author,
            "man" => \$man);
 pod2usage(1) if $help;
 pod2usage(-exitval => 0, -verbose => 2) if $man;
-my $dir = shift;
-my @gitdirs = map {s/.git$//;$_} glob "$dir/*/.git";
+if (!scalar @ARGV) {
+    print "Please specify a directory to search for git repositories.\n";
+    pod2usage(1);
+}
+my @gitdirs;
+foreach my $dir (@ARGV) {
+   foreach my $glob (glob("$dir/.git"), glob "$dir/*/.git") {
+       $glob =~ s/.git$//;
+       push @gitdirs, $glob;
+   }
+}
 my @allcommits = ();
-#print "author=$author\n";
-#print join "\n", @gitdirs;
-#print "\n";
 foreach my $repodir (@gitdirs) {
     print STDERR "Repository: $repodir\n";
     my $repo = Git->repository(Directory => $repodir);
@@ -109,6 +115,6 @@ Prints this pod document.
 
 =head1 DESCRIPTION
 
-This program shows your (or someone else's) commits in multiple repositories. The --author and --committer options tell the program which commits to show.
+This program shows your (or someone else's) commits in multiple repositories. The --author and --committer options tell the program which commits to show. Multiple directories can be specified.
 
 =cut
