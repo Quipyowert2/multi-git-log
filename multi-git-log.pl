@@ -12,11 +12,11 @@ sub parseCommits {
     foreach my $line (@_) {
         if ($line =~ m/^commit/) {
             if (defined $currentcommit) {
-	        push @commits, $currentcommit;
-		$currentcommit = "";
-	    }
-	}
-	$currentcommit .= "$line\n";
+                push @commits, $currentcommit;
+                $currentcommit = "";
+            }
+        }
+        $currentcommit .= "$line\n";
     }
     push @commits, $currentcommit;
     return @commits;
@@ -25,7 +25,7 @@ sub date {
     my ($commit) = @_;
     if ($commit !~ m/Date:\s*([^\n]+)/) {
         print STDERR "No date found in commit $commit";
-	return;
+        return;
     }
     return $1;
 }
@@ -34,7 +34,7 @@ my ($author, $committer);
 my ($help, $man) = 0;
 GetOptions("author=s" => \$author,
            "committer=s" => \$committer,
-	   "help|?" => \$help,
+           "help|?" => \$help,
            "man" => \$man);
 pod2usage(1) if $help;
 pod2usage(-exitval => 0, -verbose => 2) if $man;
@@ -64,22 +64,22 @@ foreach my $repodir (@gitdirs) {
     my @commits;
     eval {
         @commits = parseCommits($repo->command(@cmdline));
-	1;
+        1;
     } or next;
     if (scalar @commits == 1 and not defined $commits[0]) {
-	# parseCommits returned undef.
-	my $who = "";
-	if (defined $author) {
+        # parseCommits returned undef.
+        my $who = "";
+        if (defined $author) {
             $who .= "author=$author";
-	}
-	if (defined $committer) {
-	    $who .= "committer=$committer";
-	}
+        }
+        if (defined $committer) {
+            $who .= "committer=$committer";
+        }
         print STDERR "No commits found for $who\n";
     }
     else {
-	#print STDERR Dumper \@commits;
-	push @allcommits, @commits;
+        #print STDERR Dumper \@commits;
+        push @allcommits, @commits;
     }
 }
 print map {$_->[0]} sort {$b->[1] cmp $a->[1]} map {[$_, date($_)]} @allcommits;
