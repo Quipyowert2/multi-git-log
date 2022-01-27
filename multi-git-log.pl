@@ -32,10 +32,12 @@ sub date {
 # --author, --committer from `git log`
 my ($author, $committer);
 my ($help, $man) = 0;
+my $patch = 0;
 GetOptions("author=s" => \$author,
            "committer=s" => \$committer,
            "help|?" => \$help,
-           "man" => \$man);
+           "man" => \$man,
+           "patch|p" => \$patch);
 pod2usage(1) if $help;
 pod2usage(-exitval => 0, -verbose => 2) if $man;
 if (!scalar @ARGV) {
@@ -45,6 +47,7 @@ if (!scalar @ARGV) {
 my @gitdirs;
 foreach my $dir (@ARGV) {
    foreach my $glob (glob("$dir/.git"), glob "$dir/*/.git") {
+       next unless -e $glob; #Only process existing .git directories
        $glob =~ s/.git$//;
        push @gitdirs, $glob;
    }
@@ -59,6 +62,9 @@ foreach my $repodir (@gitdirs) {
     }
     if (defined $committer) {
         push @cmdline, "--committer=$committer";
+    }
+    if ($patch) {
+        push @cmdline, "-p";
     }
     print STDERR "\@cmdline=@cmdline\n";
     my @commits;
@@ -82,6 +88,7 @@ foreach my $repodir (@gitdirs) {
         push @allcommits, @commits;
     }
 }
+#Schwartzian sort aka decorate sort undecorate
 print map {$_->[0]} sort {$b->[1] cmp $a->[1]} map {[$_, date($_)]} @allcommits;
 __END__
 
@@ -102,6 +109,9 @@ Shows commits authored by a certain author.
 
 =item B<--committer>
 Shows commits whose committer field matches the following argument.
+
+=item B<--patch>
+Show diff of each commit
 
 =item B<--help>
 
