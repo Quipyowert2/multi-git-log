@@ -7,11 +7,13 @@ use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper;
 sub parseCommits {
+    my $repo = shift()->wc_path();
     my @commits;
     my $currentcommit;
     foreach my $line (@_) {
         if ($line =~ m/^commit/) {
             if (defined $currentcommit) {
+                $currentcommit = "Repository: $repo\n$currentcommit";
                 push @commits, $currentcommit;
                 $currentcommit = "";
             }
@@ -69,7 +71,7 @@ foreach my $repodir (@gitdirs) {
     print STDERR "\@cmdline=@cmdline\n";
     my @commits;
     eval {
-        @commits = parseCommits($repo->command(@cmdline));
+        @commits = parseCommits($repo, $repo->command(@cmdline));
         1;
     } or next;
     if (scalar @commits == 1 and not defined $commits[0]) {
